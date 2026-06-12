@@ -13,18 +13,22 @@ export interface UserType {
   balance: Number;
 }
 
-export interface  initialStateType {
-    user: UserType | null,
-    token: string | null,
-    contributions: unknown[],
-    balance: number,
+export interface initialStateType {
+  user: UserType | null;
+  token: string | null;
+  contributions: unknown[];
+  balance: number;
+  otp: {
+    code: string;
+    expiresAt: Date;
+  } | null;
 }
 
 export interface formValuesType {
-      email: string,
-      name: string,
-      image?: File | null,
-      imageUrl?: string,
-      password?: string,
-      role: string,
-    }
+  email: string;
+  name: string;
+  image?: File | null;
+  imageUrl?: string;
+  password?: string;
+  role: string;
+}

@@ -6,6 +6,7 @@ const initialState: initialStateType = {
   token: "",
   contributions: [],
   balance: 0,
+  otp: null,
 };
 
 const appSlice = createSlice({
@@ -24,6 +25,12 @@ const appSlice = createSlice({
     ) => {
       state.token = action.payload;
     },
+    setOtp: (
+      state: typeof initialState,
+      action: PayloadAction<{ code: string; expiresAt: Date } | null>,
+    ) => {
+      state.otp = action.payload;
+    },
     setContributions: (
       state: typeof initialState,
       action: PayloadAction<unknown[]>,
@@ -36,6 +43,6 @@ const appSlice = createSlice({
   },
 });
 
-export const { setUser, setToken, setContributions, setBalance } =
+export const { setUser, setToken, setContributions, setBalance,setOtp } =
   appSlice.actions;
 export default appSlice.reducer;

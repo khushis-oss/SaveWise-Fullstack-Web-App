@@ -14,18 +14,17 @@ import classes from "./AuthenticationImage.module.css";
 import SocialButton from "../../Buttons/SocialButton";
 import GoogleIcon from "../../Icons/GoogleIcon";
 import GitHubIcon from "../../Icons/GitHubIcon";
-import { signIn, useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { signIn } from "next-auth/react";
+import { useState } from "react";
 import { useForm } from "@mantine/form";
 import { FileInput, Image, Stack } from "@mantine/core";
 import { useMemo } from "react";
 import { IconCamera } from "@tabler/icons-react";
 import { IconSquareLetterXFilled } from "@tabler/icons-react";
 import { Select } from "@mantine/core";
-import { useDispatch, useSelector } from "react-redux";
-import { formValuesType, initialStateType } from "../../../../types";
-import { setToken } from "@/state";
-import { setUser } from "@/state";
+import { useDispatch } from "react-redux";
+import { formValuesType } from "../../../../types";
+import { setOtp } from "@/state";
 import { useRouter } from "next/navigation";
 
 const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
@@ -35,31 +34,8 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
     return file ? URL.createObjectURL(file) : null;
   }, [file]);
   const dispatch = useDispatch();
-  //const appState = useSelector((state: initialStateType) => state);
   const router = useRouter();
-  const session = useSession();
   const [error, setError] = useState("");
-  const sessionEmail = session.data?.user?.email;
-  useEffect(() => {
-    if (session.status !== "authenticated" || !sessionEmail) return;
-    const fetchBackendToken = async () => {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/auth/login`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: sessionEmail }),
-        },
-      );
-      if (res.ok) {
-        const data = await res.json();
-        dispatch(setUser(data.user));
-        dispatch(setToken(data.token));
-        router.push("/");
-      }
-    };
-    fetchBackendToken();
-  }, [session.status, sessionEmail, dispatch, router]);
 
   const form = useForm({
     initialValues: {
@@ -93,24 +69,18 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email: values.email, password: values.password }),
+            body: JSON.stringify({
+              email: values.email,
+              password: values.password,
+            }),
           },
         );
         if (response.ok) {
           const data = await response.json();
-          dispatch(setUser(data.user));
-          dispatch(setToken(data.token));
-          const result = await signIn("credentials", {
-            backendToken: data.token,
-            userId: data.user._id,
-            email: data.user.email,
-            name: data.user.name,
-            image: data.user.profilePictureUrl,
-            redirect: false,
-            callbackUrl: "/",
-          });
-          if (result?.error) setError("Invalid email or password");
-          else router.push(result?.url ?? "/");
+          dispatch(setOtp(data.user.otp));
+          router.push(
+            `/auth/verify?user=${encodeURIComponent(JSON.stringify(data.user))}`,
+          );
         } else {
           const errData = await response.json().catch(() => ({}));
           setError(errData.message || response.statusText);
@@ -141,19 +111,11 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
         );
 
         if (response.ok) {
-          const data = await response.json();
-          dispatch(setUser(data.user));
-          dispatch(setToken(data.token));
-          const result = await signIn("credentials", {
-            backendToken: data.token,
-            userId: data.user._id,
-            email: data.user.email,
-            name: data.user.name,
-            image: data.user.profilePictureUrl,
-            redirect: false,
-            callbackUrl: "/",
-          });
-          router.push(result?.url ?? "/");
+           const data = await response.json();
+           dispatch(setOtp(data.user.otp));
+          router.push(
+            `/auth/verify?user=${encodeURIComponent(JSON.stringify(data.user))}`,
+          );
           setError("");
         } else {
           const data = await response.json().catch(() => ({}));

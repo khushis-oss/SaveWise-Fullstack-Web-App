@@ -81,7 +81,8 @@ export const authOptions: AuthOptions = {
     async signIn({ user, account }) {
       if (account?.provider === "google" || account?.provider === "github") {
         try {
-          const res = await fetch(`${API_URL}/auth/signup`, {
+          let userData;
+          const signupRes = await fetch(`${API_URL}/auth/signup`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -91,11 +92,31 @@ export const authOptions: AuthOptions = {
               role: "User",
             }),
           });
-          if (!res.ok && res.status !== 400) {
-            console.error("Failed to persist OAuth user, status:", res.status);
+
+          if (signupRes.ok) {
+            const data = await signupRes.json();
+            userData = data.user;
+          } else if (signupRes.status === 400) {
+            // User already exists — generate a fresh OTP via login
+            const loginRes = await fetch(`${API_URL}/auth/login`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ email: user.email }),
+            });
+            if (!loginRes.ok) return false;
+            const loginData = await loginRes.json();
+            userData = loginData.user;
+          } else {
+            console.error("Failed to persist OAuth user, status:", signupRes.status);
+            return false;
           }
+
+          // Redirect to verify page — returning a URL denies the NextAuth session
+          // so VerifyCode will establish it via signIn("credentials") after OTP check
+          return `/auth/verify?user=${encodeURIComponent(JSON.stringify(userData))}`;
         } catch (err) {
           console.error("Failed to persist OAuth user:", err);
+          return false;
         }
       }
       return true;

@@ -15,13 +15,16 @@ const UserSchema = new mongoose.Schema(
       default: "user",
     },
     otp: {
-      code: String,
-      expiresAt: Date,
+      code: { type: String },
+      expiresAt: { type: Date },
     },
     balance: {
       type: Number,
       default: 0,
       min: 0,
+    },
+    isVerified: {
+      type: Boolean,
     },
   },
   { timestamps: true },

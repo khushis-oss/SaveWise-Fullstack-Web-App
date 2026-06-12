@@ -1,10 +1,16 @@
-import VerifyCode from '@/components/VerifyCode/VerifyCode'
-import React from 'react'
+"use client";
 
-const page = () => {
+import VerifyCode from '@/components/VerifyCode/VerifyCode'
+import { useSearchParams } from 'next/navigation';
+
+const Verifypage = () => {
+  const params = useSearchParams();
+  const userString =  params.get("user");
+  const userObj = userString ? JSON.parse(decodeURIComponent(userString)) : {}
+
   return (
-    <VerifyCode/>
+    <VerifyCode userObj={userObj}/>
   )
 }
 
-export default page
+export default Verifypage

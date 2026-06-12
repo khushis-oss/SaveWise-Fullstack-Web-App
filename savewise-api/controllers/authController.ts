@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import express from "express";
 import jwt from "jsonwebtoken";
 import { UserType } from "../../types";
+import { generateVerificationOtp } from "../utils";
 
 export const signup = async (req: express.Request, res: express.Response) => {
   try {
@@ -24,6 +25,7 @@ export const signup = async (req: express.Request, res: express.Response) => {
       passwordHashed = await bcrypt.hash(password, salt);
     }
 
+    const otp = generateVerificationOtp();
     const user = new User({
       name,
       email,
@@ -31,18 +33,15 @@ export const signup = async (req: express.Request, res: express.Response) => {
       role: role?.toLowerCase() ?? "user",
       balance: 0,
       ...(passwordHashed && { passwordHash: passwordHashed }),
+      otp: otp,
+      isVerified: false,
     });
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: "1h" },
-    );
     await user.save();
     const userObj = user.toObject();
     delete userObj.passwordHash;
 
-    res.status(201).json({ user: userObj, token: token });
+    res.status(201).json({ user: userObj });
   } catch (error) {
     res.status(500).json({ message: "internal server error" });
   }
@@ -63,7 +62,40 @@ export const login = async (req: express.Request, res: express.Response) => {
         return;
       }
     }
+    const otp = generateVerificationOtp();
+    user.otp = otp;
+    await user.save();
+    const userObj = user.toObject();
+    delete userObj.passwordHash;
 
+    res.status(201).json({ user: userObj });
+  } catch (error) {
+    res.status(500).json({ message: "internal server error" });
+  }
+};
+
+export const verifyOtp = async (
+  req: express.Request,
+  res: express.Response,
+) => {
+  try {
+    const { email, otp } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      res.status(404).json({ message: "user not found" });
+      return;
+    }
+    if (Date.now() > user.otp.expiresAt.getTime()) {
+      res.status(400).json({ message: "OTP expired" });
+      return;
+    }
+    if (otp !== user?.otp?.code) {
+      res.status(400).json({ message: "Invalid OTP" });
+      return;
+    }
+    user.isVerified = true;
+    user.otp = undefined;
+    await user.save();
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET!,
@@ -74,6 +106,6 @@ export const login = async (req: express.Request, res: express.Response) => {
 
     res.status(201).json({ user: userObj, token: token });
   } catch (error) {
-    res.status(500).json({ message: "internal server error" });
+    res.status(500).json({ message: "server error" });
   }
 };
