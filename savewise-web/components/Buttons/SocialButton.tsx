@@ -10,7 +10,7 @@ const SocialButton = ({
 }: {
   icon: JSX.Element;
   children: React.ReactNode;
-  handler: () => void;
+  handler: (e:unknown) => void;
 } & ButtonProps) => {
   return (
     <Button leftSection={icon} variant="default" {...props} onClick={handler}>

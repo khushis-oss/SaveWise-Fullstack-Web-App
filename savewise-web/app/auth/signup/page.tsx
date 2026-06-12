@@ -1,4 +1,4 @@
-import AuthForm from "@/app/components/Forms/AuthForm/AuthForm";
+import AuthForm from "@/components/Forms/AuthForm/AuthForm";
 const page = () => {
   return <AuthForm formType="signup" />;
 };

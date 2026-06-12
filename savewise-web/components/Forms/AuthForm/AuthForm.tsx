@@ -14,13 +14,19 @@ import classes from "./AuthenticationImage.module.css";
 import SocialButton from "../../Buttons/SocialButton";
 import GoogleIcon from "../../Icons/GoogleIcon";
 import GitHubIcon from "../../Icons/GitHubIcon";
-import { signIn, signOut } from "next-auth/react";
-import { useState } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useState, useEffect } from "react";
 import { useForm } from "@mantine/form";
 import { FileInput, Image, Stack } from "@mantine/core";
 import { useMemo } from "react";
 import { IconCamera } from "@tabler/icons-react";
 import { IconSquareLetterXFilled } from "@tabler/icons-react";
+import { Select } from "@mantine/core";
+import { useDispatch, useSelector } from "react-redux";
+import { formValuesType, initialStateType } from "../../../../types";
+import { setToken } from "@/state";
+import { setUser } from "@/state";
+import { useRouter } from "next/navigation";
 
 const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
   const [pageType, setPageType] = useState(formType);
@@ -28,6 +34,32 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
   const preview = useMemo(() => {
     return file ? URL.createObjectURL(file) : null;
   }, [file]);
+  const dispatch = useDispatch();
+  //const appState = useSelector((state: initialStateType) => state);
+  const router = useRouter();
+  const session = useSession();
+  const [error, setError] = useState("");
+  const sessionEmail = session.data?.user?.email;
+  useEffect(() => {
+    if (session.status !== "authenticated" || !sessionEmail) return;
+    const fetchBackendToken = async () => {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/auth/login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: sessionEmail }),
+        },
+      );
+      if (res.ok) {
+        const data = await res.json();
+        dispatch(setUser(data.user));
+        dispatch(setToken(data.token));
+        router.push("/");
+      }
+    };
+    fetchBackendToken();
+  }, [session.status, sessionEmail, dispatch, router]);
 
   const form = useForm({
     initialValues: {
@@ -35,7 +67,7 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
       name: "",
       image: null as File | null,
       password: "",
-      status: false,
+      role: "User",
     },
 
     validate: {
@@ -52,10 +84,93 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
           : null,
     },
   });
+
+  const handleSubmit = async (values: formValuesType) => {
+    if (pageType === "login") {
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/auth/login`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: values.email, password: values.password }),
+          },
+        );
+        if (response.ok) {
+          const data = await response.json();
+          dispatch(setUser(data.user));
+          dispatch(setToken(data.token));
+          const result = await signIn("credentials", {
+            backendToken: data.token,
+            userId: data.user._id,
+            email: data.user.email,
+            name: data.user.name,
+            image: data.user.profilePictureUrl,
+            redirect: false,
+            callbackUrl: "/",
+          });
+          if (result?.error) setError("Invalid email or password");
+          else router.push(result?.url ?? "/");
+        } else {
+          const errData = await response.json().catch(() => ({}));
+          setError(errData.message || response.statusText);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error) setError(error.message);
+        else setError("failed to authenticate");
+      }
+    } else {
+      const formData = new FormData();
+      const keys = Object.keys(values) as Array<keyof typeof values>;
+      for (const key of keys) {
+        const value = values[key];
+        if (value === null) continue;
+        if (value instanceof File) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
+        }
+      }
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/auth/signup`,
+          {
+            method: "POST",
+            body: formData,
+          },
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          dispatch(setUser(data.user));
+          dispatch(setToken(data.token));
+          const result = await signIn("credentials", {
+            backendToken: data.token,
+            userId: data.user._id,
+            email: data.user.email,
+            name: data.user.name,
+            image: data.user.profilePictureUrl,
+            redirect: false,
+            callbackUrl: "/",
+          });
+          router.push(result?.url ?? "/");
+          setError("");
+        } else {
+          const data = await response.json().catch(() => ({}));
+          const msg = data.message || response.statusText;
+          console.error("Signup failed:", msg);
+          setError(msg);
+        }
+      } catch (error) {
+        if (error instanceof Error) setError(error.message);
+        else setError("failed to authenticate");
+      }
+    }
+  };
   return (
     <div className={classes.wrapper}>
       <Paper className={classes.form}>
-        <form onSubmit={form.onSubmit((values) => console.log(values))}>
+        <form onSubmit={form.onSubmit(handleSubmit)}>
           <Title order={2} className={classes.title}>
             {pageType === "login"
               ? "Welcome back to SaveWise!"
@@ -139,6 +254,7 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
                       onClick={() => {
                         URL.revokeObjectURL(preview);
                         setFile(null);
+                        form.setFieldValue("image", null);
                       }}
                     />
                   </div>
@@ -170,15 +286,18 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
             }
             error={form.errors.password && "Invalid password"}
           />
-          {pageType === "login" && (
-            <Checkbox
-              label="Keep me logged in"
-              mt="xl"
-              size="md"
-              checked={form.values.status}
+          {pageType === "signup" && (
+            <Select
+              label="User Role"
+              placeholder="Pick value"
+              data={["User", "Admin"]}
+              value={form.values.role}
               onChange={(event) =>
-                form.setFieldValue("status", event.currentTarget.checked)
+                form.setFieldValue("role", event === "User" ? "User" : "Admin")
               }
+              mt="md"
+              size="md"
+              radius="md"
             />
           )}
           <Button fullWidth mt="xl" size="md" radius="md" type="submit">
@@ -203,6 +322,11 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
               {pageType === "login" ? "Sign Up" : "Login"}
             </Anchor>
           </Text>
+          {error && (
+            <Text ta="center" mt="md" c="red">
+              {error}
+            </Text>
+          )}
         </form>
       </Paper>
     </div>
