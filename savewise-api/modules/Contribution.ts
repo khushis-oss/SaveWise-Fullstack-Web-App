@@ -10,11 +10,19 @@ const ContributionSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["deposit", "withdrawal"],
+      enum: ["TRADITIONAL", "ROTH"],
       required: true,
     },
-    date: { type: Date, default: Date.now },
-    bankAccount: {type:mongoose.Schema.ObjectId,ref:"BankAccount"}
+    status: {
+      type: String,
+      enum: ["RECORDED", "WITHDRAWN"],
+      required: true,
+    },
+    taxYear: {
+      type: Number,
+      default: () => new Date().getFullYear(),
+    },
+    bankAccount: { type: mongoose.Schema.ObjectId, ref: "BankAccount" },
   },
   { timestamps: true },
 );

@@ -22,12 +22,24 @@ import {
   IconArrowUpRight,
   IconCircleCheckFilled,
   IconCoinFilled,
+  IconHistory,
 } from "@tabler/icons-react";
+import ContributionsDrawer from "./ContributionsDrawer";
+
+const currentYear = new Date().getFullYear();
+
+const taxYearOptions = Array.from({ length: 10 }, (_, i) => ({
+  value: String(currentYear - i),
+  label: String(currentYear - i),
+}));
 
 const MakeContribution = () => {
   const [opened, { open, close }] = useDisclosure(false);
+  const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false);
   const [amount, setAmount] = useState<number | string>("");
-  const [type,setType]=useState("deposit")
+  const [status,setStatus]=useState("RECORDED")
+  const [type,setType]=useState("TRADITIONAL");
+  const [taxY,setTaxY]=useState(String(currentYear))
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
@@ -43,9 +55,13 @@ const MakeContribution = () => {
   const handleClose = () => {
     close();
     setAmount("");
+    setStatus("RECORDED");
+    setType("TRADITIONAL");
+    setTaxY(String(currentYear));
     setError("");
     setSuccess(false);
   };
+  
 
   const handleSubmit = async () => {
     const numAmount = Number(amount);
@@ -53,7 +69,7 @@ const MakeContribution = () => {
       setError("Please enter a valid amount.");
       return;
     }
-    if (type === "deposit" && numAmount > balance) {
+    if (status === "RECORDED" && numAmount > balance) {
       setError("Amount exceeds your available bank balance.");
       return;
     }
@@ -69,7 +85,7 @@ const MakeContribution = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ amount: numAmount,type:type }),
+          body: JSON.stringify({ amount: numAmount,status:status,type:type,taxY:taxY }),
         },
       );
       const data = await response.json();
@@ -128,6 +144,13 @@ const MakeContribution = () => {
               </Text>
             </Box>
             <Button
+              leftSection={<IconHistory size={16} />}
+              onClick={openDrawer}
+              variant="light"
+            >
+              History
+            </Button>
+            <Button
               leftSection={<IconArrowUpRight size={16} />}
               onClick={open}
               style={{
@@ -139,6 +162,8 @@ const MakeContribution = () => {
           </Group>
         </Group>
       </Card>
+
+      <ContributionsDrawer opened={drawerOpened} onClose={closeDrawer} />
 
       <Modal
         opened={opened}
@@ -194,16 +219,30 @@ const MakeContribution = () => {
             <NativeSelect
               label="Type of contribution"
               description="Deposit or withdrawal"
-              data={["deposit", "withdrawal"]}
+              data={["RECORDED", "WITHDRAWN"]}
+              value={status}
+              onChange={(e)=>setStatus(e.target.value)}
+            />
+            <NativeSelect
+              label="Type of IRA"
+              description="Traditional or Roth"
+              data={["TRADITIONAL", "ROTH"]}
               value={type}
               onChange={(e)=>setType(e.target.value)}
+            />
+            <NativeSelect
+              label="Tax Year"
+              description="Select tax year"
+              data={taxYearOptions}
+              value={taxY}
+              onChange={(e)=>setTaxY(e.target.value)}
             />
             <NumberInput
               label="Contribution Amount"
               placeholder="Enter amount"
               prefix="$"
               min={0.01}
-              max={balance}
+
               decimalScale={2}
               thousandSeparator=","
               value={amount}
@@ -213,12 +252,14 @@ const MakeContribution = () => {
               }}
               error={error}
             />
-            <Text fz="xs" c="dimmed">
-              Maximum contribution: $
-              {balance.toLocaleString("en-CA", {
-                minimumFractionDigits: 2,
-              })}
-            </Text>
+            {status === "RECORDED" && (
+              <Text fz="xs" c="dimmed">
+                Maximum contribution: $
+                {balance.toLocaleString("en-CA", {
+                  minimumFractionDigits: 2,
+                })}
+              </Text>
+            )}
             <Divider />
             <Group justify="flex-end" gap="sm">
               <Button variant="default" onClick={handleClose}>

@@ -78,9 +78,21 @@ export const makeContribution = async (
     const userId = req.user.userId;
     const amount = Number(req.body.amount);
     const type = req.body.type;
+    const status = req.body.status;
+    const taxY = Number(req.body.taxY);
 
     if (!amount || amount <= 0) {
       res.status(400).json({ message: "Amount must be greater than 0" });
+      return;
+    }
+
+    if (!["TRADITIONAL", "ROTH"].includes(type)) {
+      res.status(400).json({ message: "Invalid contribution type" });
+      return;
+    }
+
+    if (!["RECORDED", "WITHDRAWN"].includes(status)) {
+      res.status(400).json({ message: "Invalid contribution status" });
       return;
     }
 
@@ -90,7 +102,7 @@ export const makeContribution = async (
       return;
     }
 
-    if (type === "deposit") {
+    if (status === "RECORDED") {
       if (amount > bank.balance) {
         res
           .status(400)
@@ -100,6 +112,17 @@ export const makeContribution = async (
 
       bank.balance = bank.balance - amount;
     } else {
+      const contributions = await Contribution.find({ userId });
+      const savewiseBalance = contributions.reduce(
+        (acc, c) => (c.status === "RECORDED" ? acc + c.amount : acc - c.amount),
+        0,
+      );
+      if (amount > savewiseBalance) {
+        res
+          .status(400)
+          .json({ message: "Amount exceeds available SaveWise balance" });
+        return;
+      }
       bank.balance = bank.balance + amount;
     }
 
@@ -110,6 +133,8 @@ export const makeContribution = async (
       userId,
       bankAccount: bank._id,
       type: type,
+      status: status,
+      taxYear: taxY,
     });
     await contribution.save();
 
@@ -134,13 +159,35 @@ export const getContributionBalance = async (
     let balance = user.balance;
     if (contributions.length > 0) {
       balance = contributions.reduce(
-        (acc, i) => (i.type === "deposit" ? acc + i.amount : acc - i.amount),
+        (acc, i) => (i.status === "RECORDED" ? acc + i.amount : acc - i.amount),
         0,
       );
       user.balance = balance;
       await user.save();
     }
     res.status(200).json({ user: user, contributionBalance: balance });
+  } catch (error) {
+    res.status(500).json({ message: "internal server error" });
+  }
+};
+
+export const getAllUserContributions = async (
+  req: express.Request,
+  res: express.Response,
+) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: "user not found" });
+      return;
+    }
+    const contributions = await Contribution.find({ userId });
+    if (contributions.length > 0) {
+      res.status(200).json({ contributions: contributions });
+    } else {
+      res.status(200).json({ message: "no contributions made" });
+    }
   } catch (error) {
     res.status(500).json({ message: "internal server error" });
   }
