@@ -19,7 +19,7 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const logoutHandler = (e: Event) => {
+  const logoutHandler = (e: React.MouseEvent) => {
     e.preventDefault();
     signOut({
       redirect:false
@@ -30,7 +30,11 @@ export default function Navbar() {
   };
 
   return (
-    <Box>
+    <Box style={{
+    boxShadow: "0 1px 15px rgba(0, 0, 0, 0.15)",
+    position: "relative",
+    zIndex: 10,
+  }}>
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
           <Group h="100%" gap={0}>

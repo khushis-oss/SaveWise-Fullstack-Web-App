@@ -26,6 +26,9 @@ const UserSchema = new mongoose.Schema(
     isVerified: {
       type: Boolean,
     },
+    isBankConnected: {
+      type: Boolean,
+    },
   },
   { timestamps: true },
 );

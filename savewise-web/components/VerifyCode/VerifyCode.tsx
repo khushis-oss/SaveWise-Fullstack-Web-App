@@ -45,7 +45,7 @@ function VerifyCode({ userObj }: { userObj: UserType }) {
             dispatch(setUser(data.user));
             dispatch(setToken(data.token));
             dispatch(setOtp(null));
-            const result = await signIn("credentials", {
+            await signIn("credentials", {
               backendToken: data.token,
               userId: data.user._id,
               email: data.user.email,
@@ -54,12 +54,8 @@ function VerifyCode({ userObj }: { userObj: UserType }) {
               redirect: false,
               callbackUrl: "/",
             });
-            if (data?.error) {
-              setError("Invalid OTP");
-            } else {
-              setError("");
-              router.push(result?.url ?? "/");
-            }
+            setError("");
+            router.push("/");
           }else{
             const result = await response.json()
             setError(result.message)

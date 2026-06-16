@@ -11,6 +11,8 @@ export interface UserType {
     expiresAt: Date;
   };
   balance: Number;
+  isVerified: boolean;
+  isBankConnected: boolean;
 }
 
 export interface initialStateType {
@@ -22,6 +24,7 @@ export interface initialStateType {
     code: string;
     expiresAt: Date;
   } | null;
+  bankDetails: bankDetails | null;
 }
 
 export interface formValuesType {
@@ -31,4 +34,13 @@ export interface formValuesType {
   imageUrl?: string;
   password?: string;
   role: string;
+}
+
+export interface bankDetails {
+  institutionName: string;
+  accountNumber: string;
+  transitNumber: string;
+  institutionNumber: string;
+  balance: Number;
+  ownerId: string;
 }

@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { initialStateType, UserType } from "../types";
+import { bankDetails, initialStateType, UserType } from "../types";
 
 const initialState: initialStateType = {
   user: null,
@@ -7,6 +7,7 @@ const initialState: initialStateType = {
   contributions: [],
   balance: 0,
   otp: null,
+  bankDetails: null,
 };
 
 const appSlice = createSlice({
@@ -40,9 +41,21 @@ const appSlice = createSlice({
     setBalance: (state: typeof initialState, action: PayloadAction<number>) => {
       state.balance = action.payload;
     },
+    setBankDetails: (
+      state: typeof initialState,
+      action: PayloadAction<bankDetails>,
+    ) => {
+      state.bankDetails = action.payload;
+    },
   },
 });
 
-export const { setUser, setToken, setContributions, setBalance,setOtp } =
-  appSlice.actions;
+export const {
+  setUser,
+  setToken,
+  setContributions,
+  setBalance,
+  setOtp,
+  setBankDetails,
+} = appSlice.actions;
 export default appSlice.reducer;

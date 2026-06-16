@@ -5,6 +5,7 @@ import "@mantine/core/styles.css";
 import { ColorSchemeScript, createTheme, MantineProvider } from "@mantine/core";
 import StoreProvider from "./auth/StoreProvider";
 import SessionWrapper from "./auth/SessionWrapper";
+import Syncer from "@/components/Syncer";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,6 +40,7 @@ export default function RootLayout({
         <StoreProvider>
           <SessionWrapper>
             <MantineProvider theme={theme}>
+              <Syncer />
               {children}
             </MantineProvider>
           </SessionWrapper>

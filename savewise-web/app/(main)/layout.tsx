@@ -7,11 +7,11 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col ">
       <Navbar />
       <div className="flex">
         <SideNav />
-        <div className="w-[calc(100%-80px)] p-4">{children}</div>
+        <div className="w-[calc(100%-80px)] p-4 bg-gray-300" style={{background:"#f8f9fa"}}>{children}</div>
       </div>
     </div>
   );

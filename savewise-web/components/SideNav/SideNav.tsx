@@ -66,18 +66,20 @@ export default function SideNav() {
     />
   ));
 
- const logoutHandler = (e: Event) => {
+ const logoutHandler = (e: React.MouseEvent) => {
     e.preventDefault();
-    signOut({
-      redirect:false
-    });
+    signOut({ redirect: false });
     dispatch(setUser(null));
     dispatch(setToken(null));
     router.push("/auth/login");
   };
   
   return (
-    <nav className={classes.navbar}>
+    <nav className={classes.navbar} style={{
+    boxShadow: "2px 0 15px rgba(0, 0, 0, 0.15)",
+    position: "relative",
+    zIndex: 9,
+  }}>
       <Center>
        <Image src={profit} alt='site_logo' height={30} width={30} ></Image>
       </Center>
@@ -88,7 +90,7 @@ export default function SideNav() {
         </Stack>
       </div>
 
-      <Box justify="center" gap={0} onClick={logoutHandler}>
+      <Box className='justify-center gap-0' onClick={(e)=>logoutHandler(e)}>
         <NavbarLink icon={IconLogout} label="Logout" />
       </Box>
     </nav>

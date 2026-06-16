@@ -8,7 +8,8 @@ import connectDB from "./config/db.js";
 import multer from "multer";
 import { signup } from "./controllers/authController.ts";
 import authRoutes from "./routes/authRoutes.ts";
-//import {verifyToken} from "./middlewear/authMiddlewear.ts"
+import userRoutes from "./routes/userRoutes.ts";
+import {verifyToken} from "./middlewear/authMiddlewear.ts"
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -45,6 +46,6 @@ const startServer = async () => {
 };
 
 startServer();
-//verifyToken()
 app.post("/auth/signup", upload.single("image"), signup);
 app.use("/auth",authRoutes);
+app.use("/user",verifyToken,userRoutes);

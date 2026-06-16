@@ -6,3 +6,9 @@ export function generateVerificationOtp() {
     expiresAt: new Date(Date.now() + 5 * 60 * 1000 ),
   };
 }
+
+export function generateAccountNumber(): string {
+  return Math.floor(
+    1000000000 + Math.random() * 9000000000
+  ).toString();
+}

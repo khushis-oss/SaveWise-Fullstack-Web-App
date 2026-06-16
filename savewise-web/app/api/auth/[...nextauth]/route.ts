@@ -27,12 +27,14 @@ export const authOptions: AuthOptions = {
             const secret = new TextEncoder().encode(process.env.JWT_SECRET);
             const { payload } = await jwtVerify(credentials.backendToken, secret);
             if (payload.userId === credentials.userId) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               return {
                 id: credentials.userId,
                 email: credentials.email,
                 name: credentials.name ?? null,
                 image: credentials.image ?? null,
-              };
+                backendToken: credentials.backendToken,
+              } as any;
             }
           } catch {
             return null;
@@ -73,6 +75,18 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async jwt({ token, user }: any) {
+      if (user?.backendToken) {
+        token.backendToken = user.backendToken;
+      }
+      return token;
+    },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    async session({ session, token }: any) {
+      session.backendToken = token.backendToken ?? null;
+      return session;
+    },
     async redirect({ url, baseUrl }) {
       if (url.startsWith("/")) return `${baseUrl}${url}`;
       if (url.startsWith(baseUrl)) return url;
