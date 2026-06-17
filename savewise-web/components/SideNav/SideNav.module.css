@@ -5,6 +5,11 @@
   display: flex;
   flex-direction: column;
   border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-4));
+  position: fixed !important;
+  left:0;
+  height: 100vh;
+  background-color: white;
+  top: 60px;
 }
 
 .navbarMain {

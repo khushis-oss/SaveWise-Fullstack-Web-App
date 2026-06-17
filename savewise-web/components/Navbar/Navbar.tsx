@@ -19,13 +19,11 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const router = useRouter();
 
-  const logoutHandler = (e: React.MouseEvent) => {
+  const logoutHandler = async (e: React.MouseEvent) => {
     e.preventDefault();
-    signOut({
-      redirect:false
-    });
     dispatch(setUser(null));
     dispatch(setToken(null));
+    await signOut({ redirect: false });
     router.push("/auth/login");
   };
 
@@ -38,7 +36,7 @@ export default function Navbar() {
       <header className={classes.header}>
         <Group justify="space-between" h="100%">
           <Group h="100%" gap={0}>
-            <Link href="/" className="flex items-center gap-2">
+            <Link href="/dashboard" className="flex items-center gap-2">
               <Image
                 src={dollar}
                 alt="site_logo"

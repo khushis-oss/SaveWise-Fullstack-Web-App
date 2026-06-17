@@ -19,7 +19,7 @@ export interface initialStateType {
   user: UserType | null;
   token: string | null;
   contributions: unknown[];
-  balance: number;
+  totalContributedBalance: number;
   otp: {
     code: string;
     expiresAt: Date;

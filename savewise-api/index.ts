@@ -9,6 +9,7 @@ import multer from "multer";
 import { signup } from "./controllers/authController.ts";
 import authRoutes from "./routes/authRoutes.ts";
 import userRoutes from "./routes/userRoutes.ts";
+import dashboardRoutes from "./routes/dashboardRoutes.ts";
 import {verifyToken} from "./middlewear/authMiddlewear.ts"
 const app = express();
 app.use(cors());
@@ -49,3 +50,4 @@ startServer();
 app.post("/auth/signup", upload.single("image"), signup);
 app.use("/auth",authRoutes);
 app.use("/user",verifyToken,userRoutes);
+app.use("/dashboard",verifyToken,dashboardRoutes);

@@ -1,4 +1,4 @@
-import NextAuth, { type AuthOptions } from "next-auth";
+import NextAuth, { type AuthOptions, type User } from "next-auth";
 import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
@@ -19,47 +19,22 @@ export const authOptions: AuthOptions = {
         image: { label: "Image", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email) return null;
-
-        // Token already fetched by handleSubmit — verify it locally, no second backend call
-        if (credentials.backendToken && credentials.userId && process.env.JWT_SECRET) {
-          try {
-            const secret = new TextEncoder().encode(process.env.JWT_SECRET);
-            const { payload } = await jwtVerify(credentials.backendToken, secret);
-            if (payload.userId === credentials.userId) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              return {
-                id: credentials.userId,
-                email: credentials.email,
-                name: credentials.name ?? null,
-                image: credentials.image ?? null,
-                backendToken: credentials.backendToken,
-              } as any;
-            }
-          } catch {
-            return null;
-          }
+        if (!credentials?.backendToken || !credentials?.userId || !process.env.JWT_SECRET) {
+          return null;
         }
 
-        // Fallback: standard email/password flow (used if signIn is called directly)
-        if (!credentials.password) return null;
         try {
-          const res = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-          if (!res.ok) return null;
-          const data = await res.json();
+          const secret = new TextEncoder().encode(process.env.JWT_SECRET);
+          const { payload } = await jwtVerify(credentials.backendToken, secret);
+          if (payload.userId !== credentials.userId) return null;
+
           return {
-            id: data.user._id,
-            email: data.user.email,
-            name: data.user.name,
-            image: data.user.profilePictureUrl,
-          };
+            id: credentials.userId,
+            email: credentials.email,
+            name: credentials.name ?? null,
+            image: credentials.image ?? null,
+            backendToken: credentials.backendToken,
+          } as User & { backendToken: string };
         } catch {
           return null;
         }

@@ -63,7 +63,7 @@ const BalanceRing = () => {
     (state: initialStateType) => state.bankDetails,
   );
   const contributionBalance = useSelector(
-    (state: initialStateType) => state.balance,
+    (state: initialStateType) => state?.user?.balance,
   );
 
   if (!bankDetails) return null;
@@ -102,7 +102,7 @@ const BalanceRing = () => {
   }
 
   return (
-    <Card radius="md" withBorder w={380} p={0} shadow="sm" miw={250}>
+    <Card radius="md" w="100%" withBorder p={0} shadow="sm">
       <Box
         p="lg"
         style={{

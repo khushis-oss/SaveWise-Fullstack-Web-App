@@ -55,7 +55,7 @@ function VerifyCode({ userObj }: { userObj: UserType }) {
               callbackUrl: "/",
             });
             setError("");
-            router.push("/");
+            router.push("/dashboard");
           }else{
             const result = await response.json()
             setError(result.message)
@@ -72,61 +72,113 @@ function VerifyCode({ userObj }: { userObj: UserType }) {
     }
   };
   return (
-    <div className="flex justify-center items-center my-10">
-      <div className="flex flex-col h-full justify-center items-center max-w-md mx-auto">
-        <Text size="30px" fw="700" c="#228be6" mb="lg">
-          {" "}
-          Please Complete 2 Factor Authentication
-        </Text>
-        <Card shadow="sm" withBorder padding={0} maw={500}>
-          <div>
-            <Image
-              src={auth}
-              alt="Norway"
-              className="object-cover"
-              height={250}
-            />
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #eff6ff 0%, #f8faff 100%)",
+        padding: "24px",
+      }}
+    >
+      <div style={{ width: "100%", maxWidth: 420 }}>
+        {/* Header */}
+        <Stack align="center" gap={4} mb="xl">
+          <div
+            style={{
+              width: 56,
+              height: 56,
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #228be6 0%, #74c0fc 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 6px 20px rgba(34,139,230,0.3)",
+              marginBottom: 8,
+            }}
+          >
+            <Image src={auth} alt="auth" width={32} height={32} style={{ borderRadius: "50%", objectFit: "cover" }} />
           </div>
-
-          <Stack mt="md" mb="xs" p="lg" align="center">
-            <Text fw={500} size="md">
-              Check console for OTP
+          <Text fw={700} size="xl" c="#1a1a2e" ta="center">
+            Two-Factor Authentication
+          </Text>
+          <Text size="sm" c="#6b7280" ta="center" lh={1.6}>
+            We&apos;ve sent a 6-digit verification code to{" "}
+            <Text component="span" fw={600} c="#228be6">
+              {userObj.email}
             </Text>
+          </Text>
+        </Stack>
+
+        {/* Card */}
+        <Card
+          shadow="md"
+          withBorder
+          padding="xl"
+          radius="lg"
+          style={{ borderColor: "#e7f0fd" }}
+        >
+          <Stack gap="lg" align="center">
+            <Stack gap={4} align="center" w="100%">
+              <Text fw={500} size="sm" c="#374151">
+                Enter verification code
+              </Text>
+              <Text size="xs" c="#9ca3af">
+                Check the browser console for your OTP
+              </Text>
+            </Stack>
 
             <PinInput
               length={6}
               oneTimeCode
-              className="w-1/2 mx-auto"
               value={code}
               onChange={(val) => {
                 setCode(val);
                 if (error) setError("");
               }}
               inputMode="numeric"
+              size="lg"
+              gap="xs"
             />
 
             {error && (
-              <Text c="red" size="sm">
+              <Text c="red" size="sm" ta="center">
                 {error}
               </Text>
             )}
 
             <Button
-              color="blue"
               fullWidth
-              mt="md"
+              size="md"
+              mt="xs"
               onClick={() => {
                 if (code.length !== 6) {
                   setError("Please enter all 6 digits");
                   return;
                 }
-
                 setError("");
                 verifyCodeFn();
               }}
+              style={{
+                background:
+                  "linear-gradient(135deg, #228be6 0%, #1971c2 100%)",
+                borderRadius: 8,
+                height: 44,
+              }}
             >
-              Verify
+              Verify & Continue
             </Button>
+
+            <Text
+              size="xs"
+              c="#9ca3af"
+              ta="center"
+              style={{ cursor: "pointer" }}
+              onClick={() => router.push("/auth/login")}
+            >
+              Back to login
+            </Text>
           </Stack>
         </Card>
       </div>

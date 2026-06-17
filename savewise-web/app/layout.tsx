@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import "@mantine/core/styles.css";
+import "@mantine/notifications/styles.css";
 import { ColorSchemeScript, createTheme, MantineProvider } from "@mantine/core";
+import { Notifications } from "@mantine/notifications";
 import StoreProvider from "./auth/StoreProvider";
 import SessionWrapper from "./auth/SessionWrapper";
 import Syncer from "@/components/Syncer";
@@ -40,6 +42,7 @@ export default function RootLayout({
         <StoreProvider>
           <SessionWrapper>
             <MantineProvider theme={theme}>
+              <Notifications position="bottom-left" />
               <Syncer />
               {children}
             </MantineProvider>

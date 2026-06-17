@@ -11,7 +11,12 @@ export default function MainLayout({
       <Navbar />
       <div className="flex">
         <SideNav />
-        <div className="w-[calc(100%-80px)] p-4 bg-gray-300" style={{background:"#f8f9fa"}}>{children}</div>
+        <div
+          className="w-[calc(100%-80px)] p-4 bg-gray-300"
+          style={{ background: "#f8f9fa", margin: "60px 0px 0px 80px" }}
+        >
+          {children}
+        </div>
       </div>
     </div>
   );

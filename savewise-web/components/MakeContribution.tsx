@@ -17,7 +17,7 @@ import {
 import { useDisclosure } from "@mantine/hooks";
 import { useDispatch, useSelector } from "react-redux";
 import { initialStateType } from "../../types";
-import { setBankDetails } from "@/state";
+import { setBankDetails, setUser } from "@/state";
 import {
   IconArrowUpRight,
   IconCircleCheckFilled,
@@ -25,6 +25,7 @@ import {
   IconHistory,
 } from "@tabler/icons-react";
 import ContributionsDrawer from "./ContributionsDrawer";
+import { apiFetch, notifyError } from "@/lib/apiClient";
 
 const currentYear = new Date().getFullYear();
 
@@ -77,26 +78,21 @@ const MakeContribution = () => {
     setLoading(true);
     setError("");
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/contribute`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ amount: numAmount,status:status,type:type,taxY:taxY }),
-        },
-      );
+      const response = await apiFetch("/user/contribute", token, {
+        method: "POST",
+        body: JSON.stringify({ amount: numAmount, status, type, taxY }),
+      });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message);
+        notifyError(data.message || "Contribution failed");
         return;
       }
       dispatch(setBankDetails(data.bankDetails));
+      if (data.user) dispatch(setUser(data.user));
       setSuccess(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+      if (err instanceof Error && err.message !== "UNAUTHORIZED")
+        notifyError(err.message || "Something went wrong");
     } finally {
       setLoading(false);
     }

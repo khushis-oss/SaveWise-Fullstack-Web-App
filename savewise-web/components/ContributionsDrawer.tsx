@@ -18,6 +18,7 @@ import {
 import { IconArrowDownLeft, IconArrowUpRight } from "@tabler/icons-react";
 import { useSelector } from "react-redux";
 import { initialStateType } from "../types";
+import { apiFetch, notifyError } from "@/lib/apiClient";
 
 const PAGE_SIZE = 5;
 const currentYear = new Date().getFullYear();
@@ -48,7 +49,6 @@ const ContributionsDrawer = ({ opened, onClose }: Props) => {
   const token = useSelector((state: initialStateType) => state.token);
   const [contributions, setContributions] = useState<ContributionType[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [taxYearFilter, setTaxYearFilter] = useState("All");
   const [page, setPage] = useState(1);
@@ -57,20 +57,17 @@ const ContributionsDrawer = ({ opened, onClose }: Props) => {
     if (!opened) return;
     const fetchContributions = async () => {
       setLoading(true);
-      setError("");
       try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/allContributions`,
-          { headers: { Authorization: `Bearer ${token}` } },
-        );
+        const res = await apiFetch("/user/allContributions", token);
         const data = await res.json();
         if (!res.ok) {
-          setError(data.message || "Failed to load contributions");
+          notifyError(data.message || "Failed to load contributions");
           return;
         }
         setContributions(data.contributions || []);
-      } catch {
-        setError("Something went wrong.");
+      } catch (err) {
+        if (err instanceof Error && err.message !== "UNAUTHORIZED")
+          notifyError("Something went wrong loading contributions");
       } finally {
         setLoading(false);
       }
@@ -131,10 +128,6 @@ const ContributionsDrawer = ({ opened, onClose }: Props) => {
           <Center py="xl">
             <Loader size="sm" />
           </Center>
-        ) : error ? (
-          <Text c="red" ta="center" py="xl">
-            {error}
-          </Text>
         ) : paginated.length === 0 ? (
           <Text c="dimmed" ta="center" py="xl">
             No contributions found.
@@ -194,7 +187,7 @@ const ContributionsDrawer = ({ opened, onClose }: Props) => {
           </Stack>
         )}
 
-        {!loading && !error && filtered.length > 0 && (
+        {!loading && filtered.length > 0 && (
           <>
             <Divider />
             <Center>

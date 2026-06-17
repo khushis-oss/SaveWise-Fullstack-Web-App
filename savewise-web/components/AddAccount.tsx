@@ -1,30 +1,39 @@
 "use client";
-import { Paper, Text, Button, Stack, Affix } from "@mantine/core";
-import { IconCashBanknoteFilled } from "@tabler/icons-react";
+import { Paper, Text, Button, Stack, Affix, Badge, Group, SimpleGrid, Center, Loader } from "@mantine/core";
+import {
+  IconBuildingBank,
+  IconShieldCheckFilled,
+  IconLock,
+  IconRefresh,
+} from "@tabler/icons-react";
 import { useDisclosure } from "@mantine/hooks";
-import { Modal } from "@mantine/core";
-import { Stepper, Group } from "@mantine/core";
+import { Modal, Stepper } from "@mantine/core";
 import { useState, useEffect, useCallback } from "react";
-import { IconHomeFilled } from "@tabler/icons-react";
-import { IconHome2Filled } from "@tabler/icons-react";
 import BankForm from "./Forms/BankForm";
 import { useDispatch, useSelector } from "react-redux";
-import { setBalance, setBankDetails, setUser } from "@/state";
+import { setTotalContributedBalance, setBankDetails, setUser } from "@/state";
 import { initialStateType } from "../../types";
-import { IconShieldCheckFilled } from "@tabler/icons-react";
 import BankDetails from "./BankDetails";
 import UserDetails from "./UserDetails";
 import MakeContribution from "./MakeContribution";
 import BalanceRing from "./BalanceRing";
+import { apiFetch, notifyError } from "@/lib/apiClient";
+
+const BANKS = [
+  "Bank 1",
+  "Bank 2",
+  "Bank 3",
+  "Bank 4",
+  "Bank 5",
+  "Bank 6",
+];
 
 const AddAccount = () => {
-  const [loading, { toggle }] = useDisclosure();
   const [opened, { open, close }] = useDisclosure(false);
-  const [error, setError] = useState("");
-  const [fetchError, setFetchError] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [active, setActive] = useState(0);
   const [bank, setBank] = useState("");
-  const [highestStepVisited, setHighestStepVisited] = useState(active);
   const dispatch = useDispatch();
   const token = useSelector((state: initialStateType) => state.token);
   const user = useSelector((state: initialStateType) => state.user);
@@ -34,82 +43,50 @@ const AddAccount = () => {
 
   const fetchBankDetails = useCallback(async () => {
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/bankDetails`,
-        {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
+      const response = await apiFetch("/user/bankDetails", token);
       const data = await response.json();
       if (!response.ok) {
-        setFetchError(data.message);
+        notifyError(data.message || "Failed to load bank details");
         return;
       }
       dispatch(setBankDetails(data.bankDetails));
-    } catch (error) {
-      if (error instanceof Error) setFetchError(error.message);
-      else setFetchError("failed to fetch");
+    } catch (err) {
+      if (err instanceof Error && err.message !== "UNAUTHORIZED" && err.message !== "FORBIDDEN")
+        notifyError(err.message);
     }
   }, [token, dispatch]);
 
-  const fetchContributionBalance = useCallback(async() => {
+  const fetchContributionBalance = useCallback(async () => {
     try {
-          const response = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/contributionBalance`,
-            {
-              method: "GET",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-            },
-          );
-          const data = await response.json();
-          if (!response.ok) {
-            setError(data.message);
-            return;
-          }
-          dispatch(setUser(data.user));
-          dispatch(setBalance(data.contributionBalance));
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Something went wrong.");
-      };
-  },[token,dispatch])
+      const response = await apiFetch("/user/contributionBalance", token);
+      const data = await response.json();
+      if (!response.ok) {
+        notifyError(data.message || "Failed to load balance");
+        return;
+      }
+      dispatch(setUser(data.user));
+      dispatch(setTotalContributedBalance(data.totalContributedBalance));
+    } catch (err) {
+      if (err instanceof Error && err.message !== "UNAUTHORIZED" && err.message !== "FORBIDDEN")
+        notifyError(err.message);
+    }
+  }, [token, dispatch]);
 
   useEffect(() => {
     if (user?.isBankConnected) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchBankDetails();
+      setFetchLoading(true);
+      Promise.all([fetchBankDetails(), fetchContributionBalance()]).finally(
+        () => setFetchLoading(false),
+      );
     }
-  }, [user, fetchBankDetails]);
+  }, [user?.isBankConnected, fetchBankDetails, fetchContributionBalance]);
 
-  useEffect(() => {
-    if (user?.isBankConnected) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchContributionBalance();
-    }
-  }, [user, fetchContributionBalance]);
-
-  
   const handleStepChange = (nextStep: number) => {
-    const isOutOfBounds = nextStep > 3 || nextStep < 0;
-
-    if (isOutOfBounds) {
-      return;
-    }
-
-    setError("");
+    if (nextStep > 3 || nextStep < 0) return;
+    setModalError("");
     setActive(nextStep);
-    setHighestStepVisited((hSC) => Math.max(hSC, nextStep));
   };
-
-  // Allow the user to freely go back and forth between visited steps.
-  //   const shouldAllowSelectStep = (step: number) =>
-  //     highestStepVisited >= step && active !== step;
 
   const handleBankDetails = async ({
     email,
@@ -119,215 +96,296 @@ const AddAccount = () => {
     password: string;
   }) => {
     try {
-      console.log(token);
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/connectAccount`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            email: email,
-            password: password,
-          }),
-        },
-      );
+      const response = await apiFetch("/user/connectAccount", token, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message);
+        setModalError(data.message || "Failed to connect account");
         return;
       }
       dispatch(setBankDetails(data.bankDetails));
       dispatch(setUser(data.user));
       handleStepChange(2);
-    } catch (error) {
-      if (error instanceof Error) setError(error.message);
-      else setError("failed to authenticate");
+    } catch (err) {
+      if (err instanceof Error && err.message !== "UNAUTHORIZED" && err.message !== "FORBIDDEN")
+        setModalError(err.message || "Failed to authenticate");
     }
   };
+
+  if (user?.isBankConnected && fetchLoading) {
+    return (
+      <Center h={300}>
+        <Loader size="md" />
+      </Center>
+    );
+  }
+
   return (
     <>
-      {fetchError && (
-        <Text ta="center" mt="md" c="red">
-          {fetchError}
-        </Text>
-      )}
       {bankDetails && Object.entries(bankDetails).length > 0 ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          
+        <Stack gap="md">
           <MakeContribution />
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "space-around",
-              gap:"20px",
-              flexWrap:"wrap"
-            }}
-          >
+          <SimpleGrid cols={{ base: 1, md: 3 }} spacing="md">
             <BankDetails />
             <UserDetails />
             <BalanceRing />
-          </div>
-        </div>
+          </SimpleGrid>
+        </Stack>
       ) : (
         <>
-          <Paper shadow="sm" p={50} w="90%" m="auto">
-            <Stack align="center">
-              <Text fw={500} c="#545454">
-                Add Your Bank Account
-              </Text>
-              <Text c="#888a8a">
-                To start making contributions, add the bank account you'd like
-                to contribute from. You can add and manage them anytime in your
-                account settings.
-              </Text>
-              <IconCashBanknoteFilled size={150} color="#d0ebff" />
-              <Button variant="outline" loading={loading} onClick={open}>
-                Add Bank Account
+          {/* Empty state — no bank connected */}
+          <Paper
+            shadow="sm"
+            p={60}
+            w="100%"
+            style={{
+              background:
+                "linear-gradient(145deg, #f0f7ff 0%, #ffffff 60%, #f8f9ff 100%)",
+              border: "1px solid #e7f0fd",
+              borderRadius: 16,
+            }}
+          >
+            <Stack align="center" gap="xl">
+              <div
+                style={{
+                  width: 96,
+                  height: 96,
+                  borderRadius: "50%",
+                  background:
+                    "linear-gradient(135deg, #228be6 0%, #74c0fc 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  boxShadow: "0 8px 24px rgba(34, 139, 230, 0.25)",
+                }}
+              >
+                <IconBuildingBank size={46} color="white" stroke={1.5} />
+              </div>
+
+              <Stack align="center" gap={6}>
+                <Text fw={700} size="xl" c="#1a1a2e">
+                  Connect Your Bank Account
+                </Text>
+                <Text c="#6b7280" size="sm" ta="center" maw={380} lh={1.7}>
+                  Securely link your bank to start making IRA contributions.
+                  Your data is encrypted and never stored on our servers.
+                </Text>
+              </Stack>
+
+              <Group gap={8} justify="center">
+                <Badge
+                  leftSection={<IconShieldCheckFilled size={12} />}
+                  variant="light"
+                  color="blue"
+                  radius="xl"
+                  size="sm"
+                >
+                  Bank-level Security
+                </Badge>
+                <Badge
+                  leftSection={<IconLock size={12} />}
+                  variant="light"
+                  color="teal"
+                  radius="xl"
+                  size="sm"
+                >
+                  256-bit Encryption
+                </Badge>
+                <Badge
+                  leftSection={<IconRefresh size={12} />}
+                  variant="light"
+                  color="violet"
+                  radius="xl"
+                  size="sm"
+                >
+                  Manage Anytime
+                </Badge>
+              </Group>
+
+              <Button
+                size="md"
+                leftSection={<IconBuildingBank size={18} />}
+                loading={fetchLoading}
+                onClick={open}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #228be6 0%, #1971c2 100%)",
+                  borderRadius: 10,
+                  padding: "0 36px",
+                  height: 46,
+                }}
+              >
+                Connect Bank Account
               </Button>
             </Stack>
           </Paper>
+
+          {/* Connect bank modal */}
           <Modal
             opened={opened}
             onClose={() => {
               close();
               setActive(0);
             }}
-            title="Authentication"
+            title={
+              <Text fw={600} size="lg">
+                Connect Your Bank
+              </Text>
+            }
             centered
+            size="md"
           >
-            {error && (
-              <Text ta="center" mt="md" c="red">
-                {error}
+            {modalError && (
+              <Text ta="center" mb="sm" c="red" size="sm">
+                {modalError}
               </Text>
             )}
-            <Stepper
-              active={active}
-              onStepClick={setActive}
-              h={300}
-              w="70%"
-              style={{ margin: "auto" }}
-            >
+            <Stepper active={active} onStepClick={setActive}>
+              {/* Step 1 — choose bank */}
               <Stepper.Step allowStepSelect={false}>
-                <Group justify="center">
-                  Step 1 : Choose Bank Account
-                  <Button
-                    leftSection={<IconHomeFilled size={14} />}
-                    onClick={() => {
-                      setBank("Bank 1");
-                      if (bank) {
-                        handleStepChange(active + 1);
-                      }
+                <Stack gap="sm" mt="md">
+                  <Text fw={500} size="sm" c="#374151" ta="center">
+                    Select your bank
+                  </Text>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(3, 1fr)",
+                      gap: 10,
                     }}
-                    variant="default"
                   >
-                    Bank 1
-                  </Button>
-                  <Button
-                    leftSection={<IconHome2Filled size={14} />}
-                    onClick={() => {
-                      setBank("Bank 2");
-                      if (bank) {
-                        handleStepChange(active + 1);
-                      }
-                    }}
-                    variant="default"
-                  >
-                    Bank 2
-                  </Button>
-                  <Button
-                    leftSection={<IconHomeFilled size={14} />}
-                    onClick={() => {
-                      setBank("Bank 3");
-                      if (bank) {
-                        handleStepChange(active + 1);
-                      }
-                    }}
-                    variant="default"
-                  >
-                    Bank 3
-                  </Button>
-                  <Button
-                    leftSection={<IconHome2Filled size={14} />}
-                    onClick={() => {
-                      setBank("Bank 4");
-                      if (bank) {
-                        handleStepChange(active + 1);
-                      }
-                    }}
-                    variant="default"
-                  >
-                    Bank 4
-                  </Button>
-                  <Button
-                    leftSection={<IconHomeFilled size={14} />}
-                    onClick={() => {
-                      setBank("Bank 5");
-                      if (bank) {
-                        handleStepChange(active + 1);
-                      }
-                    }}
-                    variant="default"
-                  >
-                    Bank 5
-                  </Button>
-                  <Button
-                    leftSection={<IconHome2Filled size={14} />}
-                    onClick={() => {
-                      setBank("Bank 6");
-                      if (bank) {
-                        handleStepChange(active + 1);
-                      }
-                    }}
-                    variant="default"
-                  >
-                    Bank 6
-                  </Button>
-                </Group>
-              </Stepper.Step>
-              <Stepper.Step allowStepSelect={false}>
-                Step 2 connect bank
-                <BankForm handleSubmit={handleBankDetails} />
-              </Stepper.Step>
-              <Stepper.Step allowStepSelect={false}>
-                {bankDetails ? (
-                  <div className="flex flex-col items-center">
-                    <IconShieldCheckFilled color="green" size={100} />
-                    <Text>Connected Successfully</Text>
+                    {BANKS.map((name) => (
+                      <button
+                        key={name}
+                        onClick={() => {
+                          setBank(name);
+                          handleStepChange(active + 1);
+                        }}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "center",
+                          gap: 8,
+                          padding: "16px 12px",
+                          border: `2px solid ${bank === name ? "#228be6" : "#e5e7eb"}`,
+                          borderRadius: 10,
+                          background: bank === name ? "#eff6ff" : "white",
+                          cursor: "pointer",
+                          transition: "all 0.15s",
+                        }}
+                      >
+                        <IconBuildingBank
+                          size={28}
+                          color={bank === name ? "#228be6" : "#6b7280"}
+                          stroke={1.5}
+                        />
+                        <span
+                          style={{
+                            fontSize: 12,
+                            fontWeight: 500,
+                            color: bank === name ? "#1971c2" : "#374151",
+                          }}
+                        >
+                          {name}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                ) : (
-                  <Text>Bank Not yet connected</Text>
-                )}
+                </Stack>
+              </Stepper.Step>
+
+              {/* Step 2 — credentials */}
+              <Stepper.Step allowStepSelect={false}>
+                <Stack gap="xs" mt="md">
+                  <Text fw={500} size="sm" c="#374151" ta="center">
+                    Enter your {bank} credentials
+                  </Text>
+                  <BankForm handleSubmit={handleBankDetails} />
+                </Stack>
+              </Stepper.Step>
+
+              {/* Step 3 — success */}
+              <Stepper.Step allowStepSelect={false}>
+                <Stack align="center" gap="sm" mt="lg" mb="md">
+                  <div
+                    style={{
+                      width: 72,
+                      height: 72,
+                      borderRadius: "50%",
+                      background: "#f0fdf4",
+                      border: "2px solid #bbf7d0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <IconShieldCheckFilled color="#16a34a" size={40} />
+                  </div>
+                  <Text fw={600} size="lg" c="#15803d">
+                    Connected Successfully
+                  </Text>
+                  <Text size="sm" c="#6b7280" ta="center">
+                    Your {bank} account has been linked. You can now make
+                    contributions.
+                  </Text>
+                  <Button
+                    mt="xs"
+                    onClick={() => {
+                      close();
+                      setActive(0);
+                    }}
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #228be6 0%, #1971c2 100%)",
+                    }}
+                  >
+                    Go to Dashboard
+                  </Button>
+                </Stack>
               </Stepper.Step>
             </Stepper>
-            {!bankDetails && (
-              <Group justify="center" mt="xl">
+
+            {active === 1 && (
+              <Group justify="center" mt="md">
                 <Button
-                  variant="default"
+                  variant="subtle"
+                  color="gray"
+                  size="sm"
                   onClick={() => handleStepChange(active - 1)}
                 >
-                  Back
+                  ← Back
                 </Button>
               </Group>
             )}
           </Modal>
-          {active == 1 && (
-            <Affix position={{ bottom: 0, right: 0 }} w="100%" bg={"#fff"}>
+
+          {active === 1 && (
+            <Affix position={{ bottom: 0, right: 0 }} w="100%" bg="#fff">
               <div
                 style={{
                   width: "100%",
-                  height: "20px",
-                  boxShadow: "-1px 0 6px rgba(0,0,0,0.5)",
-                  padding: "20px",
+                  boxShadow: "0 -2px 10px rgba(0,0,0,0.08)",
+                  padding: "10px 20px",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  gap: 8,
                 }}
               >
-                Credentials » username: user_good | password: pass_good
+                <Text size="xs" c="#6b7280">
+                  Demo credentials —
+                </Text>
+                <Text size="xs" fw={500} c="#374151">
+                  Username: user_good
+                </Text>
+                <Text size="xs" c="#9ca3af">
+                  |
+                </Text>
+                <Text size="xs" fw={500} c="#374151">
+                  Password: pass_good
+                </Text>
               </div>
             </Affix>
           )}

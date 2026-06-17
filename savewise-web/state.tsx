@@ -5,7 +5,7 @@ const initialState: initialStateType = {
   user: null,
   token: "",
   contributions: [],
-  balance: 0,
+  totalContributedBalance: 0,
   otp: null,
   bankDetails: null,
 };
@@ -38,8 +38,8 @@ const appSlice = createSlice({
     ) => {
       state.contributions = action.payload;
     },
-    setBalance: (state: typeof initialState, action: PayloadAction<number>) => {
-      state.balance = action.payload;
+    setTotalContributedBalance: (state: typeof initialState, action: PayloadAction<number>) => {
+      state.totalContributedBalance = action.payload;
     },
     setBankDetails: (
       state: typeof initialState,
@@ -54,7 +54,7 @@ export const {
   setUser,
   setToken,
   setContributions,
-  setBalance,
+  setTotalContributedBalance,
   setOtp,
   setBankDetails,
 } = appSlice.actions;

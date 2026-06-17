@@ -35,6 +35,8 @@ export const signup = async (req: express.Request, res: express.Response) => {
       ...(passwordHashed && { passwordHash: passwordHashed }),
       otp: otp,
       isVerified: false,
+      isBankConnected:false,
+      contributions:null
     });
 
     await user.save();

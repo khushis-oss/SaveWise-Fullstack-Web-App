@@ -1,5 +1,5 @@
-"use client"
-import { useState } from 'react';
+"use client";
+import { useState } from "react";
 import {
   IconCalendarStats,
   IconDeviceDesktopAnalytics,
@@ -8,13 +8,15 @@ import {
   IconHome2,
   IconLogout,
   IconSettings,
-  IconSwitchHorizontal,
+  IconAdjustmentsHorizontalFilled,
+  IconReportMoneyFilled,
+  IconClipboardTextFilled,
   IconUser,
-} from '@tabler/icons-react';
-import { Center, Stack,Box, Tooltip, UnstyledButton } from '@mantine/core';
-import classes from './SideNav.module.css';
-import Image from 'next/image';
-import profit from "../../public/financial-profit.png"
+} from "@tabler/icons-react";
+import { Center, Stack, Box, Tooltip, UnstyledButton } from "@mantine/core";
+import classes from "./SideNav.module.css";
+import Image from "next/image";
+import profit from "../../public/financial-profit.png";
 import { signOut } from "next-auth/react";
 import { useDispatch, useSelector } from "react-redux";
 import { setToken, setUser } from "@/state";
@@ -43,17 +45,22 @@ function NavbarLink({ icon: Icon, label, active, onClick }: NavbarLinkProps) {
 }
 
 const mockdata = [
-  { icon: IconHome2, label: 'Home' },
-  { icon: IconGauge, label: 'Dashboard' },
-  { icon: IconDeviceDesktopAnalytics, label: 'Analytics' },
-  { icon: IconCalendarStats, label: 'Releases' },
-  { icon: IconUser, label: 'Account' },
-  { icon: IconFingerprint, label: 'Security' },
-  { icon: IconSettings, label: 'Settings' },
+  { icon: IconHome2, label: "Dashboard", slug: "/dashboard" },
+  {
+    icon: IconReportMoneyFilled,
+    label: "Contributions",
+    slug: "/contributions",
+  },
+  {
+    icon: IconAdjustmentsHorizontalFilled,
+    label: "Allocations",
+    slug: "/funds",
+  },
+  { icon: IconClipboardTextFilled, label: "Activity", slug: "/activity" },
 ];
 
 export default function SideNav() {
-  const [active, setActive] = useState(2);
+  const [active, setActive] = useState(0);
   const dispatch = useDispatch();
   const router = useRouter();
 
@@ -62,26 +69,32 @@ export default function SideNav() {
       {...link}
       key={link.label}
       active={index === active}
-      onClick={() => setActive(index)}
+      onClick={() => {
+        setActive(index);
+        router.push(link.slug);
+      }}
     />
   ));
 
- const logoutHandler = (e: React.MouseEvent) => {
+  const logoutHandler = (e: React.MouseEvent) => {
     e.preventDefault();
     signOut({ redirect: false });
     dispatch(setUser(null));
     dispatch(setToken(null));
     router.push("/auth/login");
   };
-  
+
   return (
-    <nav className={classes.navbar} style={{
-    boxShadow: "2px 0 15px rgba(0, 0, 0, 0.15)",
-    position: "relative",
-    zIndex: 9,
-  }}>
+    <nav
+      className={classes.navbar}
+      style={{
+        boxShadow: "2px 0 15px rgba(0, 0, 0, 0.15)",
+        position: "relative",
+        zIndex: 9,
+      }}
+    >
       <Center>
-       <Image src={profit} alt='site_logo' height={30} width={30} ></Image>
+        <Image src={profit} alt="site_logo" height={30} width={30}></Image>
       </Center>
 
       <div className={classes.navbarMain}>
@@ -90,7 +103,7 @@ export default function SideNav() {
         </Stack>
       </div>
 
-      <Box className='justify-center gap-0' onClick={(e)=>logoutHandler(e)}>
+      <Box className="justify-center gap-0" onClick={(e) => logoutHandler(e)}>
         <NavbarLink icon={IconLogout} label="Logout" />
       </Box>
     </nav>
