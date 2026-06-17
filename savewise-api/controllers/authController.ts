@@ -3,7 +3,8 @@ import bcrypt from "bcrypt";
 import express from "express";
 import jwt from "jsonwebtoken";
 import { UserType } from "../../types";
-import { generateVerificationOtp } from "../utils";
+import { generateVerificationOtp, CustomEvents } from "../utils";
+import { eventBus } from "../eventBus";
 
 export const signup = async (req: express.Request, res: express.Response) => {
   try {
@@ -35,8 +36,8 @@ export const signup = async (req: express.Request, res: express.Response) => {
       ...(passwordHashed && { passwordHash: passwordHashed }),
       otp: otp,
       isVerified: false,
-      isBankConnected:false,
-      contributions:null
+      isBankConnected: false,
+      contributions: null,
     });
 
     await user.save();
@@ -95,9 +96,22 @@ export const verifyOtp = async (
       res.status(400).json({ message: "Invalid OTP" });
       return;
     }
+    const isNewUser = !user.isVerified;
     user.isVerified = true;
     user.otp = undefined;
     await user.save();
+
+    eventBus.emit(
+      isNewUser ? CustomEvents.USER_SIGNED_UP : CustomEvents.USER_LOGED_IN,
+      {
+        id: user._id,
+        description: isNewUser
+          ? `User signed up with email address ${user.email}`
+          : `User logged in with email address ${user.email}`,
+        model: "User",
+      },
+    );
+
     const token = jwt.sign(
       { userId: user._id, role: user.role },
       process.env.JWT_SECRET!,

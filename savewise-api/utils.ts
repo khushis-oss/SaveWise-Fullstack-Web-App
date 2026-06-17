@@ -12,3 +12,10 @@ export function generateAccountNumber(): string {
     1000000000 + Math.random() * 9000000000
   ).toString();
 }
+
+export const CustomEvents= {
+  USER_SIGNED_UP: "user_signed_up",
+  USER_LOGED_IN:"user_logges_in",
+  CONTRIBUTION_MADE:"contribution_made",
+  ALLOCATED_FUNDS:"allocated_funds"
+}

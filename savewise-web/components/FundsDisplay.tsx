@@ -214,7 +214,7 @@ const FundsDisplay = () => {
         setError(data.message || "Failed to save allocation");
         return;
       }
-      dispatch(setUser(data.user))
+      dispatch(setUser(data.user));
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");

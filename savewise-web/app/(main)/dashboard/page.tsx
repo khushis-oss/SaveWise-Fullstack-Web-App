@@ -45,6 +45,8 @@ import {
   IconWallet,
 } from "@tabler/icons-react";
 import { apiFetch, notifyError } from "@/lib/apiClient";
+import ActivityFeed from "@/components/ActivityFeed";
+import Link from "next/link";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const COLORS = [
@@ -760,21 +762,20 @@ const DashboardPage = () => {
 
       {/* Row 5: Recent Activity */}
       <Card radius="md" withBorder p="lg" shadow="xs">
-        <Group gap="xs" mb="md">
-          <ThemeIcon size="sm" radius="xl" variant="light" color="gray">
-            <IconHistory size={12} />
-          </ThemeIcon>
-          <Text fw={700} fz="md">
-            Recent Activity
-          </Text>
+        <Group gap="xs" mb="md" justify="space-between">
+          <Group gap="xs">
+            <ThemeIcon size="sm" radius="xl" variant="light" color="gray">
+              <IconHistory size={12} />
+            </ThemeIcon>
+            <Text fw={700} fz="md">
+              Recent Activity
+            </Text>
+          </Group>
+          <Link href="/activity" style={{ fontSize: 12, color: "#228be6", textDecoration: "none" }}>
+            View all →
+          </Link>
         </Group>
-        <EmptyState
-          icon={<IconHistory size={26} color="#868e96" stroke={1.5} />}
-          color="#868e96"
-          title="No recent activity"
-          sub="Activity will appear here once available"
-          height={120}
-        />
+        <ActivityFeed limit={5} />
       </Card>
     </Stack>
   );

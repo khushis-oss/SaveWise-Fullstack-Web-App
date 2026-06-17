@@ -3,7 +3,8 @@ import BankAccount from "../modules/BankAccount";
 import Contribution from "../modules/Contribution";
 import Funds from "../modules/Funds";
 import User from "../modules/User";
-import { generateAccountNumber } from "../utils";
+import { generateAccountNumber, CustomEvents } from "../utils";
+import { eventBus } from "../eventBus";
 import express from "express";
 
 export const connectBankAccount = async (
@@ -143,6 +144,12 @@ export const makeContribution = async (
     });
     await contribution.save();
 
+    eventBus.emit(CustomEvents.CONTRIBUTION_MADE, {
+      id: contribution._id,
+      description: `User ${status === "RECORDED" ? "contributed" : "withdrew"} $${amount} (${type})`,
+      model: "Contribution",
+    });
+
     res.status(200).json({ bankDetails: bank, contribution, user });
   } catch (error) {
     res.status(500).json({ message: "internal server error" });
@@ -252,6 +259,13 @@ export const allocateContributionFunds = async (
 
     user.balance = user.balance - amount;
     await user.save();
+
+    eventBus.emit(CustomEvents.ALLOCATED_FUNDS, {
+      id: newAllocation._id,
+      description: `User allocated $${amount} across ${allocations.length} fund(s)`,
+      model: "Allocation",
+    });
+
     res.status(200).json({ user: user });
   } catch (error) {
     res.status(500).json({ message: "internal server error" });
