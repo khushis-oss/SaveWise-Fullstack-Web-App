@@ -293,7 +293,7 @@ const DashboardPage = () => {
   return (
     <Stack gap="xl" p="md">
       {/* Stat summary row */}
-      <SimpleGrid cols={{ base: 2, md: 4 }} spacing="md">
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
         <StatCard
           label="Bank Balance"
           value={`$${bankBalance.toLocaleString("en-CA", { minimumFractionDigits: 2 })}`}
