@@ -8,7 +8,7 @@ import {
 import classes from "./Navbar.module.css";
 import { signOut } from "next-auth/react";
 import { useDispatch, useSelector } from "react-redux";
-import { setToken, setUser } from "@/state";
+import { setBankDetails, setToken, setUser } from "@/state";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -23,6 +23,7 @@ export default function Navbar() {
     e.preventDefault();
     dispatch(setUser(null));
     dispatch(setToken(null));
+    dispatch(setBankDetails(null));
     await signOut({ redirect: false });
     router.push("/auth/login");
   };

@@ -148,6 +148,7 @@ export const makeContribution = async (
       id: contribution._id,
       description: `User ${status === "RECORDED" ? "contributed" : "withdrew"} $${amount} (${type})`,
       model: "Contribution",
+      userId,
     });
 
     res.status(200).json({ bankDetails: bank, contribution, user });
@@ -264,6 +265,7 @@ export const allocateContributionFunds = async (
       id: newAllocation._id,
       description: `User allocated $${amount} across ${allocations.length} fund(s)`,
       model: "Allocation",
+      userId,
     });
 
     res.status(200).json({ user: user });

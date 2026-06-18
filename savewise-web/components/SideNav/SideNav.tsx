@@ -19,7 +19,7 @@ import Image from "next/image";
 import profit from "../../public/financial-profit.png";
 import { signOut } from "next-auth/react";
 import { useDispatch, useSelector } from "react-redux";
-import { setToken, setUser } from "@/state";
+import { setBankDetails, setToken, setUser } from "@/state";
 import { useRouter } from "next/navigation";
 
 interface NavbarLinkProps {
@@ -81,6 +81,7 @@ export default function SideNav() {
     signOut({ redirect: false });
     dispatch(setUser(null));
     dispatch(setToken(null));
+    dispatch(setBankDetails(null));
     router.push("/auth/login");
   };
 

@@ -43,7 +43,7 @@ const appSlice = createSlice({
     },
     setBankDetails: (
       state: typeof initialState,
-      action: PayloadAction<bankDetails>,
+      action: PayloadAction<bankDetails | null>,
     ) => {
       state.bankDetails = action.payload;
     },

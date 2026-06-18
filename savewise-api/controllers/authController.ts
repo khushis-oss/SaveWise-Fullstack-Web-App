@@ -109,6 +109,7 @@ export const verifyOtp = async (
           ? `User signed up with email address ${user.email}`
           : `User logged in with email address ${user.email}`,
         model: "User",
+        userId: user._id,
       },
     );
 

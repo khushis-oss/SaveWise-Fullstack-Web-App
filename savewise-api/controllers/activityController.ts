@@ -8,15 +8,18 @@ const logActivity = async ({
   description,
   id,
   model,
+  userId,
 }: {
   type: string;
   description: string;
   id: string;
   model: string;
+  userId: string;
 }) => {
   const newActivity = new Activity({
-    type: type,
-    description: description,
+    userId,
+    type,
+    description,
     referenceId: id,
     referenceModel: model,
   });
@@ -26,37 +29,25 @@ const logActivity = async ({
 
 export const getActivities = async (req: Request, res: Response) => {
   try {
-    const activities = await getAllActivities();
+    const userId = req.user.userId;
+    const activities = await Activity.find({ userId }).sort({ createdAt: -1 });
     res.json({ activities });
   } catch {
     res.status(500).json({ message: "Failed to fetch activities" });
   }
 };
 
-export const getAllActivities = async () => {
-  const activities = await Activity.find().sort({ createdAt: -1 });
-
-  const modelGroups = ["User", "Contribution", "Allocation"] as const;
-  for (const model of modelGroups) {
-    const group = activities.filter((a) => a.referenceModel === model);
-    if (group.length > 0) {
-      await Activity.populate(group, { path: "referenceId", model });
-    }
-  }
-
-  return activities;
-};
-
 Object.values(CustomEvents).forEach((event) => {
   eventBus.on(event, async (payload) => {
     try {
-      const { id, description, model } = payload;
+      const { id, description, model, userId } = payload;
 
       await logActivity({
         type: event,
         description,
         id,
         model,
+        userId,
       });
     } catch (err) {
       console.error("Activity logging failed:", err);

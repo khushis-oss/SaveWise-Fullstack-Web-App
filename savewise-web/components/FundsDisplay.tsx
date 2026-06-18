@@ -36,6 +36,7 @@ import {
 import { useSelector ,useDispatch} from "react-redux";
 import { initialStateType } from "../../types";
 import { setUser } from "@/state";
+import { apiFetch } from "@/lib/apiClient";
 
 type Fund = {
   _id: string;
@@ -115,16 +116,7 @@ const FundsDisplay = () => {
     let cancelled = false;
     const load = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/funds`,
-          {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+        const response = await apiFetch("/user/funds", token);
         const data = await response.json();
         if (cancelled) return;
         if (!response.ok) {
@@ -194,20 +186,10 @@ const FundsDisplay = () => {
           percentage: allocations[f._id],
           amount: ((allocations[f._id] / 100) * availableBalance).toFixed(2),
         }));
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000"}/user/allocate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            allocations: payload,
-            amount: availableBalance,
-          }),
-        },
-      );
+      const response = await apiFetch("/user/allocate", token, {
+        method: "POST",
+        body: JSON.stringify({ allocations: payload, amount: availableBalance }),
+      });
       
       const data = await response.json();
       if (!response.ok) {

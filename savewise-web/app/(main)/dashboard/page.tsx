@@ -268,8 +268,12 @@ const DashboardPage = () => {
       ];
     }, []);
 
-  const savewiseBalance = Number(user?.balance ?? lineData[lineData.length - 1]?.balance ?? 0);
-  const bankBalance = Number(bankDetails?.balance ?? 0);
+  const savewiseBalance = Number(
+    user?.balance ?? lineData[lineData.length - 1]?.balance ?? 0,
+  );
+  const bankBalance = user?.isBankConnected
+    ? Number(bankDetails?.balance ?? 0)
+    : 0;
 
   const initials = user?.name
     ?.split(" ")
@@ -323,11 +327,19 @@ const DashboardPage = () => {
       {/* Row 2: User + Bank */}
       <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
         {/* User card */}
-        <Card radius="md" withBorder p={0} shadow="xs" style={{ overflow: "hidden" }}>
+        <Card
+          radius="md"
+          withBorder
+          p={0}
+          shadow="xs"
+          style={{ overflow: "hidden" }}
+        >
           <Box
             px="lg"
             py="md"
-            style={{ background: "linear-gradient(135deg, #7950f2 0%, #cc5de8 100%)" }}
+            style={{
+              background: "linear-gradient(135deg, #7950f2 0%, #cc5de8 100%)",
+            }}
           >
             <Group gap="md" align="center" wrap="nowrap">
               <Avatar
@@ -340,7 +352,10 @@ const DashboardPage = () => {
                 }
                 size={52}
                 radius="xl"
-                style={{ border: "2px solid rgba(255,255,255,0.4)", flexShrink: 0 }}
+                style={{
+                  border: "2px solid rgba(255,255,255,0.4)",
+                  flexShrink: 0,
+                }}
               >
                 <Text fw={700} c="white" fz="sm">
                   {initials}
@@ -360,7 +375,11 @@ const DashboardPage = () => {
                   fw={700}
                   fz="lg"
                   c="white"
-                  style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                  style={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
                 >
                   {user?.name}
                 </Text>
@@ -368,7 +387,10 @@ const DashboardPage = () => {
                   variant="outline"
                   size="sm"
                   tt="capitalize"
-                  style={{ borderColor: "rgba(255,255,255,0.5)", color: "white" }}
+                  style={{
+                    borderColor: "rgba(255,255,255,0.5)",
+                    color: "white",
+                  }}
                 >
                   {user?.role}
                 </Badge>
@@ -381,17 +403,29 @@ const DashboardPage = () => {
               <Text
                 fz="sm"
                 c="dimmed"
-                style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
               >
                 {user?.email}
               </Text>
             </Group>
             <Divider />
             <Group gap="xs">
-              <Badge color={user?.isVerified ? "green" : "orange"} variant="dot" size="sm">
+              <Badge
+                color={user?.isVerified ? "green" : "orange"}
+                variant="dot"
+                size="sm"
+              >
                 {user?.isVerified ? "Verified" : "Unverified"}
               </Badge>
-              <Badge color={user?.isBankConnected ? "blue" : "gray"} variant="dot" size="sm">
+              <Badge
+                color={user?.isBankConnected ? "blue" : "gray"}
+                variant="dot"
+                size="sm"
+              >
                 {user?.isBankConnected ? "Bank Connected" : "No Bank"}
               </Badge>
             </Group>
@@ -416,7 +450,8 @@ const DashboardPage = () => {
                   width: 56,
                   height: 56,
                   borderRadius: "50%",
-                  background: "linear-gradient(135deg, #228be6 0%, #74c0fc 100%)",
+                  background:
+                    "linear-gradient(135deg, #228be6 0%, #74c0fc 100%)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -436,7 +471,8 @@ const DashboardPage = () => {
                 mt="xs"
                 onClick={() => router.push("/contributions")}
                 style={{
-                  background: "linear-gradient(135deg, #228be6 0%, #1971c2 100%)",
+                  background:
+                    "linear-gradient(135deg, #228be6 0%, #1971c2 100%)",
                 }}
               >
                 Connect Bank
@@ -499,7 +535,8 @@ const DashboardPage = () => {
                     Balance
                   </Text>
                   <Text fw={800} fz="xl" c="white">
-                    ${Number(bankDetails.balance).toLocaleString("en-CA", {
+                    $
+                    {Number(bankDetails.balance).toLocaleString("en-CA", {
                       minimumFractionDigits: 2,
                     })}
                   </Text>
@@ -771,7 +808,10 @@ const DashboardPage = () => {
               Recent Activity
             </Text>
           </Group>
-          <Link href="/activity" style={{ fontSize: 12, color: "#228be6", textDecoration: "none" }}>
+          <Link
+            href="/activity"
+            style={{ fontSize: 12, color: "#228be6", textDecoration: "none" }}
+          >
             View all →
           </Link>
         </Group>
