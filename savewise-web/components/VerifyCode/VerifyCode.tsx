@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { setUser, setToken, setOtp } from "@/state";
 import { signIn } from "next-auth/react";
-
+import { IconShieldCheckFilled } from '@tabler/icons-react';
 function VerifyCode({ userObj }: { userObj: UserType }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -98,7 +98,7 @@ function VerifyCode({ userObj }: { userObj: UserType }) {
               marginBottom: 8,
             }}
           >
-            <Image src={auth} alt="auth" width={32} height={32} style={{ borderRadius: "50%", objectFit: "cover" }} />
+            <IconShieldCheckFilled size={20} color="#1a1a2e"/>
           </div>
           <Text fw={700} size="xl" c="#1a1a2e" ta="center">
             Two-Factor Authentication

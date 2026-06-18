@@ -29,7 +29,6 @@ export const connectBankAccount = async (
       });
     }
     const { email, password } = req.body;
-    console.log(email, password);
     if (email !== "user_good" || password !== "pass_good") {
       res.status(400).json({ message: "Invalid Credentials" });
       return;
