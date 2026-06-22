@@ -83,7 +83,7 @@ export const verifyAuthority = (req: Request,
   try {
     if(req.user.role !== "user" ){
       res.status(403).json({
-      message: "You do not have access to perform this action"
+      message: `You do not have access to perform this action your role is ${req.user.role} only user roles have access`
       })
       return;
     }

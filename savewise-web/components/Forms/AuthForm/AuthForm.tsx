@@ -255,7 +255,7 @@ const AuthForm = ({ formType }: { formType: "login" | "signup" }) => {
               data={["User", "Admin"]}
               value={form.values.role}
               onChange={(event) =>
-                form.setFieldValue("role", event === "User" ? "User" : "Admin")
+                form.setFieldValue("role", event === "Admin" ? "Admin" : "User")
               }
               mt="md"
               size="md"
