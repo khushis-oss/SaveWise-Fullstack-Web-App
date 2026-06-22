@@ -33,17 +33,13 @@ export const connectBankAccount = async (
       res.status(400).json({ message: "Invalid Credentials" });
       return;
     }
-    let allAccountsLength = await BankAccount.countDocuments();
-    if (allAccountsLength == 0) {
-      allAccountsLength++;
-    }
 
     const newAccount = new BankAccount({
       institutionName: "Mock Bank",
       accountNumber: generateAccountNumber(),
       transitNumber: "12345",
       institutionNumber: "001",
-      balance: 10000 * allAccountsLength,
+      balance: 10000,
       ownerId: userId,
     });
 

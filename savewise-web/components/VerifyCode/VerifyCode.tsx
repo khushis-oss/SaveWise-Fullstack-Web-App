@@ -1,7 +1,6 @@
 "use client";
 import { Card, PinInput, Text, Stack, Button } from "@mantine/core";
-import auth from "../../public/auth.png";
-import Image from "next/image";
+import { Badge } from '@mantine/core';
 import { useEffect, useState } from "react";
 import { UserType } from "../../../types";
 import { useRouter } from "next/navigation";
@@ -124,9 +123,7 @@ function VerifyCode({ userObj }: { userObj: UserType }) {
               <Text fw={500} size="sm" c="#374151">
                 Enter verification code
               </Text>
-              <Text size="xs" c="#9ca3af">
-                Check the browser console for your OTP
-              </Text>
+              <Badge color="pink" size="lg">Check the browser console for your OTP</Badge>
             </Stack>
 
             <PinInput

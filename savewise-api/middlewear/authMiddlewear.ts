@@ -50,7 +50,9 @@ export const verifyHMAC = (req: Request, res: Response, next: NextFunction) => {
 
     const requestTime = new Date(timestamp).getTime();
     if (isNaN(requestTime) || Date.now() - requestTime > FIVE_MINUTES_MS) {
-      return res.status(401).json({ message: "Request expired or invalid timestamp" });
+      return res
+        .status(401)
+        .json({ message: "Request expired or invalid timestamp" });
     }
 
     const secret = process.env.HMAC_SECRET_KEY;
@@ -59,7 +61,10 @@ export const verifyHMAC = (req: Request, res: Response, next: NextFunction) => {
     }
 
     const message = `${uniqueid}\n${timestamp}`;
-    const expected = crypto.createHmac("sha256", secret).update(message).digest("base64");
+    const expected = crypto
+      .createHmac("sha256", secret)
+      .update(message)
+      .digest("base64");
 
     const isValid = crypto.timingSafeEqual(
       Buffer.from(receivedSignature),
@@ -77,21 +82,23 @@ export const verifyHMAC = (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export const verifyAuthority = (req: Request,
+export const verifyAuthority = (
+  req: Request,
   res: Response,
-  next: NextFunction,) =>{
+  next: NextFunction,
+) => {
   try {
-    if(req.user.role !== "user" ){
+    if (req.user.role !== "user") {
       res.status(403).json({
-      message: `You do not have access to perform this action your role is ${req.user.role} only user roles have access`
-      })
+        message: `You do not have access to perform this action your role is ${req.user.role} only user roles have access`,
+      });
       return;
     }
     next();
   } catch (error) {
     console.error(error);
     return res.status(401).json({
-      message: "server error"
+      message: "server error",
     });
   }
-}
+};

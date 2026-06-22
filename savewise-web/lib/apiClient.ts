@@ -72,7 +72,7 @@ export async function apiFetch(
     const body = await res.clone().json().catch(() => ({}));
     notifications.show({
       title: "Access denied",
-      message: body.message || "You do not have access to perform this action.",
+      message: body.message || "You do not have access to perform this action your role is not user.",
       color: "red",
       autoClose: 4000,
     });
